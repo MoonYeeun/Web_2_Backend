@@ -42,7 +42,7 @@ public class User {
     private Long selfPracticeCnt = 0L;
 
     @ColumnDefault("0")
-    private Byte reliability = 0;
+    private Byte reliability = 70;
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<QuestionList> questionLists = new ArrayList<>();
@@ -59,11 +59,19 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SelfHistory> selfHistories = new ArrayList<>();
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<StudyVideo> studyVideos = new ArrayList<>();
+
     @Builder
-    public User(String email, String password, String name) {
+    public User(String email, String password, String name,
+                String mainIndustry, String subIndustry, String mainJob, String subJob) {
         this.email = email;
         this.password = password;
         this.name = name;
+        this.mainIndustry = mainIndustry;
+        this.subIndustry = subIndustry;
+        this.mainJob = mainJob;
+        this.subJob = subJob;
     }
 
     public void increaseSelfPracticeCnt() {
@@ -92,5 +100,10 @@ public class User {
     public void addSelfHistory(SelfHistory selfHistory) {
         selfHistory.updateUser(this);
         this.selfHistories.add(selfHistory);
+    }
+
+    public void addStudyVideo(StudyVideo studyVideo) {
+        studyVideo.updateUser(this);
+        this.studyVideos.add(studyVideo);
     }
 }

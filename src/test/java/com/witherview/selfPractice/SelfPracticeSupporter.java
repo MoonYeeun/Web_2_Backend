@@ -2,9 +2,11 @@ package com.witherview.selfPractice;
 
 import com.witherview.account.AccountSession;
 import com.witherview.database.entity.QuestionList;
+import com.witherview.database.entity.SelfCheck;
 import com.witherview.database.entity.SelfHistory;
 import com.witherview.database.entity.User;
 import com.witherview.database.repository.QuestionListRepository;
+import com.witherview.database.repository.SelfCheckRepository;
 import com.witherview.database.repository.SelfHistoryRepository;
 import com.witherview.database.repository.UserRepository;
 import com.witherview.selfPractice.exception.NotFoundUser;
@@ -41,6 +43,7 @@ public class SelfPracticeSupporter extends MockMvcSupporter {
     final String updatedAnswer = "저의 목표는 ~입니다.";
 
     Long selfHistoryId = (long) 1;
+    Long selfCheckId = (long) 1;
 
     final MockHttpSession mockHttpSession = new MockHttpSession();
 
@@ -54,12 +57,16 @@ public class SelfPracticeSupporter extends MockMvcSupporter {
     SelfHistoryRepository selfHistoryRepository;
 
     @Autowired
+    SelfCheckRepository selfCheckRepository;
+
+    @Autowired
     PasswordEncoder passwordEncoder;
 
     @BeforeEach
     public void 회원가입_세션생성_리스트생성() {
         // 회원가입
-        User user = userRepository.save(new User(email, passwordEncoder.encode(password), name));
+        User user = userRepository.save(new User(email, passwordEncoder.encode(password), name,
+                "주 관심산업", "부 관심산업", "주 관심직무", "부 관심직무"));
         userId = user.getId();
 
         // 세션생성
@@ -75,5 +82,9 @@ public class SelfPracticeSupporter extends MockMvcSupporter {
         user.addSelfHistory(selfHistory);
         user.increaseSelfPracticeCnt();
         selfHistoryId = selfHistoryRepository.save(selfHistory).getId();
+
+        SelfCheck selfCheck = new SelfCheck(1L, false);
+        selfHistory.addSelfCheck(selfCheck);
+        selfCheckId = selfCheckRepository.save(selfCheck).getId();
     }
 }

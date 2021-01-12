@@ -3,6 +3,7 @@ package com.witherview.groupPractice;
 import com.witherview.account.AccountSession;
 import com.witherview.database.entity.StudyFeedback;
 import com.witherview.database.entity.StudyRoom;
+import com.witherview.database.entity.StudyVideo;
 import com.witherview.database.entity.User;
 import com.witherview.exception.ErrorCode;
 import com.witherview.exception.ErrorResponse;
@@ -16,6 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpSession;
@@ -114,7 +116,7 @@ public class GroupStudyController {
     @ApiOperation(value="해당 스터디방 참여자 조회")
     @GetMapping(path = "/room/{id}")
     public ResponseEntity<?> findParticipants(@ApiParam(value = "참여 조회할 방 id", required = true) @PathVariable Long id) {
-        List<User> lists = groupStudyService.findParticipatedUsers(id);
+        List<GroupStudyDTO.ParticipantDTO> lists = groupStudyService.findParticipatedUsers(id);
         return new ResponseEntity<>(modelMapper.map(lists, GroupStudyDTO.ParticipantDTO[].class), HttpStatus.OK);
     }
 
@@ -140,5 +142,16 @@ public class GroupStudyController {
         AccountSession accountSession = (AccountSession) session.getAttribute("user");
         StudyFeedback studyFeedback = groupStudyService.createFeedBack(accountSession.getId(), requestDto);
         return new ResponseEntity<>(modelMapper.map(studyFeedback, GroupStudyDTO.FeedBackResponseDTO.class), HttpStatus.CREATED);
+    }
+
+    @ApiOperation(value = "스터디 녹화 등록")
+    @PostMapping(path = "/video", consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+                                  produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> uploadVideo(@RequestParam("videoFile") MultipartFile videoFile,
+                                         @RequestParam("studyRoomId") Long studyRoomId,
+                                         @ApiIgnore HttpSession session) {
+        AccountSession accountSession = (AccountSession) session.getAttribute("user");
+        StudyVideo studyVideo = groupStudyService.uploadVideo(videoFile, studyRoomId, accountSession.getId());
+        return new ResponseEntity<>(modelMapper.map(studyVideo, GroupStudyDTO.VideoSaveResponseDTO.class), HttpStatus.OK);
     }
 }

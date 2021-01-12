@@ -8,6 +8,7 @@ import com.witherview.groupPractice.exception.NotFoundStudyRoom;
 import com.witherview.selfPractice.exception.NotFoundUser;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -143,6 +144,36 @@ public class GroupStudyApiTest extends GroupStudySupporter {
     }
 
     @Test
+    public void 특정스터디룸_참여자_조회성공() throws Exception {
+        ResultActions resultActions = mockMvc.perform(get("/api/group/room/" + roomId)
+                .session(mockHttpSession))
+                .andExpect(status().isOk());
+
+        resultActions.andExpect(jsonPath("$[0].id").value(userId1));
+        resultActions.andExpect(jsonPath("$[0].email").value(email1));
+        resultActions.andExpect(jsonPath("$[0].name").value(name1));
+        resultActions.andExpect(jsonPath("$[0].groupStudyCnt").value(1));
+        resultActions.andExpect(jsonPath("$[0].reliability").value(70));
+        resultActions.andExpect(jsonPath("$[0].isHost").value(true));
+
+        resultActions.andExpect(jsonPath("$[1].id").value(userId3));
+        resultActions.andExpect(jsonPath("$[1].email").value(email3));
+        resultActions.andExpect(jsonPath("$[1].name").value(name3));
+        resultActions.andExpect(jsonPath("$[1].groupStudyCnt").value(1));
+        resultActions.andExpect(jsonPath("$[1].reliability").value(70));
+        resultActions.andExpect(jsonPath("$[1].isHost").value(false));
+    }
+
+    @Test
+    public void 스터디룸_삭제_성공() throws Exception {
+        ResultActions resultActions = mockMvc.perform(delete("/api/group/" + roomId)
+                .session(mockHttpSession))
+                .andExpect(status().isOk());
+
+        resultActions.andExpect(jsonPath("$.id").value(roomId));
+    }
+
+    @Test
     public void 스터디룸_등록실패_유효하지_않은_사용자() throws Exception {
         GroupStudyDTO.StudyCreateDTO dto = GroupStudyDTO.StudyCreateDTO.builder()
                 .title(title2)
@@ -271,5 +302,38 @@ public class GroupStudyApiTest extends GroupStudySupporter {
 
         resultActions.andExpect(jsonPath("$.message").value("해당 스터디룸의 호스트가 아닙니다."));
         resultActions.andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    public void 스터디_영상_등록_실패_없는_스터디룸_룸아이디가_이상할_때() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("video",
+                "video.webm", "video/webm", "test webm".getBytes());
+
+        ResultActions resultActions = mockMvc.perform(multipart("/api/group/video")
+                .file("videoFile", file.getBytes())
+                .param("studyRoomId", "0")
+                .session(mockHttpSession))
+                .andExpect(status().isNotFound());
+
+        resultActions.andExpect(jsonPath("$.status").value(404));
+        resultActions.andExpect(jsonPath("$.code").value("GROUP-PRACTICE001"));
+    }
+
+    @Test
+    public void 스터디_영상_등록_참여하지_않은_스터디룸() throws Exception {
+        AccountSession accountSession = new AccountSession(userId2, email2, name2);
+        mockHttpSession.setAttribute("user", accountSession);
+
+        MockMultipartFile file = new MockMultipartFile("video",
+                "video.webm", "video/webm", "test webm".getBytes());
+
+        ResultActions resultActions = mockMvc.perform(multipart("/api/group/video")
+                .file("videoFile", file.getBytes())
+                .param("studyRoomId", roomId.toString())
+                .session(mockHttpSession))
+                .andExpect(status().isBadRequest());
+
+        resultActions.andExpect(jsonPath("$.status").value(400));
+        resultActions.andExpect(jsonPath("$.code").value("GROUP-PRACTICE003"));
     }
 }
