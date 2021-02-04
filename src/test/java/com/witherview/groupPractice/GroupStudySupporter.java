@@ -1,11 +1,9 @@
 package com.witherview.groupPractice;
 
 import com.witherview.account.AccountSession;
-import com.witherview.database.entity.StudyFeedback;
-import com.witherview.database.entity.StudyRoom;
-import com.witherview.database.entity.StudyRoomParticipant;
-import com.witherview.database.entity.User;
+import com.witherview.database.entity.*;
 import com.witherview.database.repository.StudyFeedbackRepository;
+import com.witherview.database.repository.StudyHistoryRepository;
 import com.witherview.database.repository.StudyRoomRepository;
 import com.witherview.database.repository.UserRepository;
 import com.witherview.support.MockMvcSupporter;
@@ -32,6 +30,7 @@ public class GroupStudySupporter extends MockMvcSupporter {
     final String title1 = "네이버 빅데이터 플랫폼 스터디 모집합니다.";
     final String description1 =  "코딩테스트 합격자만 신청바랍니다!!!!";
     final String industry1 = "it서비스";
+    final String category1 = "이공계_사기업";
     final String job1 = "개발자";
     final LocalDate date1 = LocalDate.parse("2020-12-03");
     final LocalTime time1 = LocalTime.parse("15:00:01");
@@ -48,6 +47,8 @@ public class GroupStudySupporter extends MockMvcSupporter {
     Long userId2 = (long)2;
     Long userId3 = (long)3;
     Long roomId = (long) 4;
+    Long studyHistoryId1 = (long) 1;
+    Long studyHistoryId2 = (long) 2;
     @Autowired
     UserRepository userRepository;
 
@@ -56,6 +57,9 @@ public class GroupStudySupporter extends MockMvcSupporter {
 
     @Autowired
     StudyFeedbackRepository studyFeedbackRepository;
+
+    @Autowired
+    StudyHistoryRepository studyHistoryRepository;
 
     @Autowired
     PasswordEncoder passwordEncoder;
@@ -80,7 +84,7 @@ public class GroupStudySupporter extends MockMvcSupporter {
         mockHttpSession.setAttribute("user", accountSession);
 
         // 스터디룸생성
-        StudyRoom studyRoom = new StudyRoom(title1, description1, industry1, job1, date1, time1);
+        StudyRoom studyRoom = new StudyRoom(title1, description1, category1, industry1, job1, date1, time1);
         user1.addHostedRoom(studyRoom);
         roomId = studyRoomRepository.save(studyRoom).getId();
 
@@ -100,25 +104,25 @@ public class GroupStudySupporter extends MockMvcSupporter {
         studyRoom.addParticipants(studyRoomParticipant2);
         user3.addParticipatedRoom(studyRoomParticipant2);
 
+        // 스터디 연습 내역 등록
+        StudyHistory studyHistory1 = StudyHistory.builder().studyRoom(roomId).build();
+        user1.addStudyHistory(studyHistory1);
+        user1.increaseGroupPracticeCnt();
+        studyHistoryId1 = studyHistoryRepository.save(studyHistory1).getId();
+
+        StudyHistory studyHistory2 = StudyHistory.builder().studyRoom(roomId).build();
+        user2.addStudyHistory(studyHistory2);
+        studyHistoryId2 = studyHistoryRepository.save(studyHistory2).getId();
+
         // 피드백 등록
         StudyFeedback studyFeedback1 = StudyFeedback.builder()
-                .studyRoom(roomId)
-                .writtenUser(user1)
-                .score(score)
-                .passOrFail(passOrFail)
-                .build();
-
-        user3.addStudyFeedback(studyFeedback1);
-        studyFeedbackRepository.save(studyFeedback1);
-
-        StudyFeedback studyFeedback2 = StudyFeedback.builder()
-                .studyRoom(roomId)
+                .targetUser(user1)
                 .writtenUser(user3)
                 .score(score)
                 .passOrFail(passOrFail)
                 .build();
 
-        user1.addStudyFeedback(studyFeedback2);
-        studyFeedbackRepository.save(studyFeedback2);
+        studyHistory1.addStudyFeedBack(studyFeedback1);
+        studyFeedbackRepository.save(studyFeedback1);
     }
 }

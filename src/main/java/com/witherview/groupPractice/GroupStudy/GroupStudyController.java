@@ -1,10 +1,7 @@
-package com.witherview.groupPractice;
+package com.witherview.groupPractice.GroupStudy;
 
 import com.witherview.account.AccountSession;
-import com.witherview.database.entity.StudyFeedback;
-import com.witherview.database.entity.StudyRoom;
-import com.witherview.database.entity.StudyVideo;
-import com.witherview.database.entity.User;
+import com.witherview.database.entity.*;
 import com.witherview.exception.ErrorCode;
 import com.witherview.exception.ErrorResponse;
 import io.swagger.annotations.Api;
@@ -17,7 +14,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpSession;
@@ -100,7 +96,7 @@ public class GroupStudyController {
 
     @ApiOperation(value="스터디방 참여")
     @PostMapping(path = "/room", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> joinRoom(@RequestBody @Valid GroupStudyDTO.StudyJoinDTO requestDto,
+    public ResponseEntity<?> joinRoom(@RequestBody @Valid GroupStudyDTO.StudyRequestDTO requestDto,
                                       BindingResult result,
                                       @ApiIgnore HttpSession session) {
         if(result.hasErrors()) {
@@ -111,6 +107,15 @@ public class GroupStudyController {
         AccountSession accountSession = (AccountSession) session.getAttribute("user");
         StudyRoom studyRoom = groupStudyService.joinRoom(requestDto.getId(), accountSession.getId());
         return new ResponseEntity<>(modelMapper.map(studyRoom, GroupStudyDTO.ResponseDTO.class), HttpStatus.OK);
+    }
+
+    @ApiOperation(value="특정 카테고리 별 스터디방 조회")
+    @GetMapping("/room")
+    public ResponseEntity<?> findCategoryRooms(@ApiParam(value = "조회할 방 카테고리") @RequestParam String category,
+                                               @ApiParam(value = "조회할 page (디폴트 값 = 0)")
+                                               @RequestParam(value = "page", required = false) Integer current) {
+        List<StudyRoom> lists = groupStudyService.findCategoryRooms(category, current);
+        return new ResponseEntity<>(modelMapper.map(lists, GroupStudyDTO.ResponseDTO[].class), HttpStatus.OK);
     }
 
     @ApiOperation(value="해당 스터디방 참여자 조회")
@@ -142,16 +147,5 @@ public class GroupStudyController {
         AccountSession accountSession = (AccountSession) session.getAttribute("user");
         StudyFeedback studyFeedback = groupStudyService.createFeedBack(accountSession.getId(), requestDto);
         return new ResponseEntity<>(modelMapper.map(studyFeedback, GroupStudyDTO.FeedBackResponseDTO.class), HttpStatus.CREATED);
-    }
-
-    @ApiOperation(value = "스터디 녹화 등록")
-    @PostMapping(path = "/video", consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
-                                  produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> uploadVideo(@RequestParam("videoFile") MultipartFile videoFile,
-                                         @RequestParam("studyRoomId") Long studyRoomId,
-                                         @ApiIgnore HttpSession session) {
-        AccountSession accountSession = (AccountSession) session.getAttribute("user");
-        StudyVideo studyVideo = groupStudyService.uploadVideo(videoFile, studyRoomId, accountSession.getId());
-        return new ResponseEntity<>(modelMapper.map(studyVideo, GroupStudyDTO.VideoSaveResponseDTO.class), HttpStatus.OK);
     }
 }
